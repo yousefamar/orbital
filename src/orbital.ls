@@ -1,12 +1,12 @@
-window.ORB =
+@ORB =
   TICK_INTERVAL_MS: 1000ms/60
 
-window.request-anim-frame = window.request-animation-frame
-    || window.webkit-request-animation-frame
-    || window.moz-request-animation-frame
-    || (callback) !->	window.set-timeout callback, window.ORB.TICK_INTERVAL_MS
+@request-anim-frame = @request-animation-frame
+    || @webkit-request-animation-frame
+    || @moz-request-animation-frame
+    || (callback) !->	@set-timeout callback, @ORB.TICK_INTERVAL_MS
 
-window.ORB.main = do
+@ORB.main = do
 
   ctx = null
 
