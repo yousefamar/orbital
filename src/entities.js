@@ -50,14 +50,54 @@ ORB.Entity = Entity = (function(){
   }
   return Entity;
 }());
-/*
-OOB.Entity.prototype.tick = function(delta) {
-
-};
-*/
 ORB.Planet = Planet = (function(superclass){
-  Planet;
   var radiusChanged, prototype = extend$((import$(Planet, superclass).displayName = 'Planet', Planet), superclass).prototype, constructor = Planet;
+  Planet.styles = {
+    2: {
+      fg: '#776e65',
+      bg: '#eee4da'
+    },
+    4: {
+      fg: '#776e65',
+      bg: '#ede0c8'
+    },
+    8: {
+      fg: '#f9f6f2',
+      bg: '#f2b179'
+    },
+    16: {
+      fg: '#f9f6f2',
+      bg: '#f59563'
+    },
+    32: {
+      fg: '#f9f6f2',
+      bg: '#f67c5f'
+    },
+    64: {
+      fg: '#f9f6f2',
+      bg: '#f65e3b'
+    },
+    128: {
+      fg: '#f9f6f2',
+      bg: '#edcf72'
+    },
+    256: {
+      fg: '#f9f6f2',
+      bg: '#edcc61'
+    },
+    512: {
+      fg: '#f9f6f2',
+      bg: '#edc850'
+    },
+    1024: {
+      fg: '#f9f6f2',
+      bg: '#edc53f'
+    },
+    2048: {
+      fg: '#f9f6f2',
+      bg: '#edc22e'
+    }
+  };
   function Planet(scene, x, y, mass){
     this.mass = mass;
     Planet.superclass.call(this, scene, x, y);
@@ -95,11 +135,11 @@ ORB.Planet = Planet = (function(superclass){
       ctx.save();
       ctx.beginPath();
       ctx.arc(this.x, this.y, rScaled, 0, 2 * Math.PI);
-      ctx.fillStyle = 'brown';
+      ctx.fillStyle = constructor.styles[this.mass].bg;
       ctx.fill();
       ctx.font = rScaled * 1.33 + "pt Thaoma";
       ctx.textAlign = 'center';
-      ctx.fillStyle = 'blue';
+      ctx.fillStyle = constructor.styles[this.mass].fg;
       ctx.fillText(this.mass + "", this.x, this.y + rScaled * 0.66);
       ctx.restore();
       if (ORB.DEBUG) {

@@ -1,5 +1,5 @@
 @ORB =
-  DEBUG: true
+  #DEBUG: true
   TICK_INTERVAL_MS: 1000ms/60
 
 @request-anim-frame = @request-animation-frame

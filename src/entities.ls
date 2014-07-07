@@ -27,12 +27,6 @@ class ORB.EntityManager
 class ORB.Entity
   (@scene, @x, @y) ->
 
-/*
-OOB.Entity.prototype.tick = function(delta) {
-
-};
-*/
-
 #OOB.Entity.prototype.render = function(ctx) {
 #	if (OOB.DEBUG && this.radius) {
 #		ctx.save();
@@ -64,7 +58,40 @@ OOB.Entity.prototype.tick = function(delta) {
 #
 
 class ORB.Planet extends ORB.Entity
-  @
+  @styles =
+    2:
+      fg: \#776e65
+      bg: \#eee4da
+    4:
+      fg: \#776e65
+      bg: \#ede0c8
+    8:
+      fg: \#f9f6f2
+      bg: \#f2b179
+    16:
+      fg: \#f9f6f2
+      bg: \#f59563
+    32:
+      fg: \#f9f6f2
+      bg: \#f67c5f
+    64:
+      fg: \#f9f6f2
+      bg: \#f65e3b
+    128:
+      fg: \#f9f6f2
+      bg: \#edcf72
+    256:
+      fg: \#f9f6f2
+      bg: \#edcc61
+    512:
+      fg: \#f9f6f2
+      bg: \#edc850
+    1024:
+      fg: \#f9f6f2
+      bg: \#edc53f
+    2048:
+      fg: \#f9f6f2
+      bg: \#edc22e
 
   (scene, x, y, @mass) ->
     super scene, x, y
@@ -93,11 +120,11 @@ class ORB.Planet extends ORB.Entity
       ctx.save!
       ctx.begin-path!
       ctx.arc @x, @y, r-scaled, 0, 2 * Math.PI
-      ctx.fill-style = \brown
+      ctx.fill-style = @@styles[@mass].bg
       ctx.fill!
       ctx.font = "#{r-scaled*1.33}pt Thaoma"
       ctx.text-align = \center
-      ctx.fill-style = \blue
+      ctx.fill-style = @@styles[@mass].fg
       ctx.fill-text "#{@mass}", @x, @y + r-scaled*0.66
       ctx.restore!
       if ORB.DEBUG
