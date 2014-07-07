@@ -1,4 +1,5 @@
 @ORB =
+  DEBUG: true
   TICK_INTERVAL_MS: 1000ms/60
 
 @request-anim-frame = @request-animation-frame
@@ -6,7 +7,7 @@
     || @moz-request-animation-frame
     || (callback) !->	@set-timeout callback, @ORB.TICK_INTERVAL_MS
 
-@ORB.main = do
+@ORB.main = do ->
 
   ctx = null
 
@@ -14,11 +15,7 @@
     key-down: ->
     key-up: ->
     render: ->
-  scene =
-    key-down: ->
-    key-up: ->
-    tick: ->
-    render: ->
+  scene = null
 
   last-tick = Date.now!
   tick = !->
@@ -41,6 +38,8 @@
     canvas = document.get-element-by-id \canvas
     ctx := canvas.get-context \2d
     ctx.font = '20pt Tahoma'
+
+    scene := new ORB.Space!
 
     document.body.add-event-listener \keydown, !->
       (gui.key-down it.key-code) || (scene.key-down it.key-code)
