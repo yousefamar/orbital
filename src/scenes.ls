@@ -42,8 +42,8 @@ class ORB.Space extends ORB.Scene
 
     @add @player = new ORB.Player @
 
-    for til 10
-      @add new ORB.Planet @, (Math.random! - 0.5) * 10, (Math.random! - 0.5) * 200, if Math.random! > 0.66 then 2 else 4
+    for til 50
+      @add new ORB.Planet @, (Math.random! - 0.5) * 100, (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
 
   add: (entity) ->
     super ...
@@ -108,18 +108,34 @@ class ORB.Space extends ORB.Scene
       for j from i+1 til @planets.length
         planet-b = @planets[j]
         if planet-a.collides-with planet-b
-          inci-x = planet-a.x - planet-a.prev-x
-          inci-y = planet-a.y - planet-a.prev-y
-          dist-x = planet-b.x - planet-a.x
-          dist-y = planet-b.y - planet-a.y
-          dot = inci-x * dist-x + inci-y * dist-y
-          dist-sq = dist-x * dist-x + dist-y * dist-y
-          refl-x = inci-x - (2 * dot) * dist-x / dist-sq
-          refl-y = inci-y - (2 * dot) * dist-y / dist-sq
-          planet-a.vx += refl-x
-          planet-a.vy += refl-y
-          planet-b.vx -= refl-x
-          planet-b.vy -= refl-y
+          if planet-a.mass == planet-b.mass
+            absorber = planet-a
+            absorbee = planet-b
+            absorbee-id = j
+            if absorbee is @player
+              absorber = planet-b
+              absorbee = planet-a
+              absorbee-id = i
+            absorbee.absorbed = true
+            @planets.splice absorbee-id, 1
+            # TODO: Don't hack LiveScript
+            to$--
+            to1$--
+            absorber.mass *= 2
+            @add new ORB.Planet @, @player.x + (Math.random! - 0.5) * 100, @player.y + (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
+          else
+            inci-x = planet-a.x - planet-a.prev-x
+            inci-y = planet-a.y - planet-a.prev-y
+            dist-x = planet-b.x - planet-a.x
+            dist-y = planet-b.y - planet-a.y
+            dot = inci-x * dist-x + inci-y * dist-y
+            dist-sq = dist-x * dist-x + dist-y * dist-y
+            refl-x = inci-x - (2 * dot) * dist-x / dist-sq
+            refl-y = inci-y - (2 * dot) * dist-y / dist-sq
+            planet-a.vx += refl-x
+            planet-a.vy += refl-y
+            planet-b.vx -= refl-x
+            planet-b.vy -= refl-y
 
   render: (ctx) ->
     ctx.save!

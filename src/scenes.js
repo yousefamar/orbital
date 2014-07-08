@@ -44,8 +44,8 @@ ORB.Space = Space = (function(superclass){
       }
     };
     this.add(this.player = new ORB.Player(this));
-    for (i$ = 0; i$ < 10; ++i$) {
-      this.add(new ORB.Planet(this, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 200, Math.random() > 0.66 ? 2 : 4));
+    for (i$ = 0; i$ < 50; ++i$) {
+      this.add(new ORB.Planet(this, (Math.random() - 0.5) * 100, (Math.random() - 0.5) * 100, Math.random() > 0.66 ? 2 : 4));
     }
   }
   prototype.add = function(entity){
@@ -77,7 +77,7 @@ ORB.Space = Space = (function(superclass){
     }
   };
   prototype.tick = function(delta){
-    var i$, to$, i, planetA, j$, to1$, j, planetB, distX, distY, distSq, dist, unitX, unitY, mm, force, ref$, len$, planet, lresult$, inciX, inciY, dot, reflX, reflY, results$ = [];
+    var i$, to$, i, planetA, j$, to1$, j, planetB, distX, distY, distSq, dist, unitX, unitY, mm, force, ref$, len$, planet, lresult$, absorber, absorbee, absorbeeId, inciX, inciY, dot, reflX, reflY, results$ = [];
     superclass.prototype.tick.apply(this, arguments);
     this.camera.moveTowards(this.player);
     this.camera.zoom = 1 + 9 * (1 - (this.player.radiusSmooth - 0.798) / 24.73);
@@ -122,18 +122,35 @@ ORB.Space = Space = (function(superclass){
         j = j$;
         planetB = this.planets[j];
         if (planetA.collidesWith(planetB)) {
-          inciX = planetA.x - planetA.prevX;
-          inciY = planetA.y - planetA.prevY;
-          distX = planetB.x - planetA.x;
-          distY = planetB.y - planetA.y;
-          dot = inciX * distX + inciY * distY;
-          distSq = distX * distX + distY * distY;
-          reflX = inciX - (2 * dot) * distX / distSq;
-          reflY = inciY - (2 * dot) * distY / distSq;
-          planetA.vx += reflX;
-          planetA.vy += reflY;
-          planetB.vx -= reflX;
-          lresult$.push(planetB.vy -= reflY);
+          if (planetA.mass === planetB.mass) {
+            absorber = planetA;
+            absorbee = planetB;
+            absorbeeId = j;
+            if (absorbee === this.player) {
+              absorber = planetB;
+              absorbee = planetA;
+              absorbeeId = i;
+            }
+            absorbee.absorbed = true;
+            this.planets.splice(absorbeeId, 1);
+            to$--;
+            to1$--;
+            absorber.mass *= 2;
+            lresult$.push(this.add(new ORB.Planet(this, this.player.x + (Math.random() - 0.5) * 100, this.player.y + (Math.random() - 0.5) * 100, Math.random() > 0.66 ? 2 : 4)));
+          } else {
+            inciX = planetA.x - planetA.prevX;
+            inciY = planetA.y - planetA.prevY;
+            distX = planetB.x - planetA.x;
+            distY = planetB.y - planetA.y;
+            dot = inciX * distX + inciY * distY;
+            distSq = distX * distX + distY * distY;
+            reflX = inciX - (2 * dot) * distX / distSq;
+            reflY = inciY - (2 * dot) * distY / distSq;
+            planetA.vx += reflX;
+            planetA.vy += reflY;
+            planetB.vx -= reflX;
+            lresult$.push(planetB.vy -= reflY);
+          }
         }
       }
       results$.push(lresult$);

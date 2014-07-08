@@ -142,6 +142,7 @@ class ORB.Planet extends ORB.Entity
   tick: (delta) ->
 
   render: (ctx) ->
+    if @absorbed then return false
     if @_radius-changed
       @radius-smooth += 0.2 * (@_style.radius - @radius-smooth)
       if Math.abs (@_style.radius - @radius-smooth) < 0.01px then @_radius-changed = false

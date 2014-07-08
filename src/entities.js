@@ -151,6 +151,9 @@ ORB.Planet = Planet = (function(superclass){
   };
   prototype.tick = function(delta){};
   prototype.render = function(ctx){
+    if (this.absorbed) {
+      return false;
+    }
     if (this._radiusChanged) {
       this.radiusSmooth += 0.2 * (this._style.radius - this.radiusSmooth);
       if (Math.abs(this._style.radius - this.radiusSmooth < 0.01)) {
