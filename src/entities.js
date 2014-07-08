@@ -7,32 +7,26 @@ ORB.EntityManager = EntityManager = (function(){
     this.scene = scene;
     this.tickQueue = new List();
     this.renderQueue = new List();
-    this.tangibleList = new List();
   }
   prototype.add = function(entity){
     if ('tick' in entity) {
       this.tickQueue.add(entity);
     }
     if ('render' in entity) {
-      this.renderQueue.add(entity);
-    }
-    if (entity.mass > 0) {
-      return this.tangibleList.add(entity);
+      return this.renderQueue.add(entity);
     }
   };
   prototype.tick = function(delta){
-    var i$, to$, i, entity, results$ = [];
+    var i$, to$, entity, results$ = [];
     for (i$ = 0, to$ = this.tickQueue.size; i$ < to$; ++i$) {
-      i = i$;
       entity = this.tickQueue.poll();
       results$.push(entity.tick(delta) && this.tickQueue.add(entity));
     }
     return results$;
   };
   prototype.render = function(ctx){
-    var i$, to$, i, entity, results$ = [];
+    var i$, to$, entity, results$ = [];
     for (i$ = 0, to$ = this.renderQueue.size; i$ < to$; ++i$) {
-      i = i$;
       entity = this.renderQueue.poll();
       results$.push(entity.render(ctx) && this.renderQueue.add(entity));
     }
@@ -124,7 +118,9 @@ ORB.Planet = Planet = (function(superclass){
     this.mass = mass;
     Planet.superclass.call(this, scene, x, y);
     this.radius = Math.sqrt(mass / Math.PI);
-    this._radiusSmooth = 0;
+    this.radiusSmooth = 0;
+    this.netfx = 0;
+    this.netfy = 0;
     this._radiusChanged = true;
     this._style = constructor.styles[mass];
   }
@@ -144,23 +140,23 @@ ORB.Planet = Planet = (function(superclass){
   prototype.tick = function(delta){};
   prototype.render = function(ctx){
     if (this._radiusChanged) {
-      this._radiusSmooth += 0.2 * (this._style.radius - this._radiusSmooth);
-      if (Math.abs(this._style.radius - this._radiusSmooth < 0.01)) {
+      this.radiusSmooth += 0.2 * (this._style.radius - this.radiusSmooth);
+      if (Math.abs(this._style.radius - this.radiusSmooth < 0.01)) {
         this._radiusChanged = false;
       }
     }
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.beginPath();
-    ctx.arc(0, 0, this._radiusSmooth, 0, 2 * Math.PI);
+    ctx.arc(0, 0, this.radiusSmooth, 0, 2 * Math.PI);
     ctx.fillStyle = this._style.bg;
     ctx.fill();
     ctx.scale(0.1, 0.1);
-    ctx.font = (this._style.pt - 10 * (this._style.radius - this._radiusSmooth)) + "pt Courier";
+    ctx.font = (this._style.pt - 10 * (this._style.radius - this.radiusSmooth)) + "pt Courier";
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillStyle = this._style.fg;
-    ctx.fillText(this.mass + "", 0, this._radiusSmooth);
+    ctx.fillText(this.mass + "", 0, this.radiusSmooth);
     ctx.restore();
     if (ORB.DEBUG) {
       ctx.save();

@@ -2,20 +2,18 @@ class ORB.EntityManager
   (@scene) ->
     @tick-queue = new List!
     @render-queue = new List!
-    @tangible-list = new List!
 
   add: (entity) ->
     if \tick of entity then @tick-queue.add entity
     if \render of entity then @render-queue.add entity
-    if entity.mass > 0 then @tangible-list.add entity
 
   tick: (delta) ->
-    for i from 0 til @tick-queue.size
+    for til @tick-queue.size
       entity = @tick-queue.poll!
       (entity.tick delta) && @tick-queue.add entity
 
   render: (ctx) ->
-    for i from 0 til @render-queue.size
+    for til @render-queue.size
       entity = @render-queue.poll!
       (entity.render ctx) && @render-queue.add entity
 
@@ -118,7 +116,9 @@ class ORB.Planet extends ORB.Entity
   (scene, x, y, @mass) ->
     super scene, x, y
     @radius = Math.sqrt mass/Math.PI
-    @_radius-smooth = 0
+    @radius-smooth = 0
+    @netfx = 0
+    @netfy = 0
     @_radius-changed = true
     @_style = @@styles[mass]
 
@@ -134,20 +134,20 @@ class ORB.Planet extends ORB.Entity
 
   render: (ctx) ->
     if @_radius-changed
-      @_radius-smooth += 0.2 * (@_style.radius - @_radius-smooth)
-      if Math.abs (@_style.radius - @_radius-smooth) < 0.01px then @_radius-changed = false
+      @radius-smooth += 0.2 * (@_style.radius - @radius-smooth)
+      if Math.abs (@_style.radius - @radius-smooth) < 0.01px then @_radius-changed = false
     ctx.save!
     ctx.translate @x, @y
     ctx.begin-path!
-    ctx.arc 0, 0, @_radius-smooth, 0, 2 * Math.PI
+    ctx.arc 0, 0, @radius-smooth, 0, 2 * Math.PI
     ctx.fill-style = @_style.bg
     ctx.fill!
     ctx.scale 0.1, 0.1
-    ctx.font = "#{@_style.pt - 10 * (@_style.radius - @_radius-smooth)}pt Courier"
+    ctx.font = "#{@_style.pt - 10 * (@_style.radius - @radius-smooth)}pt Courier"
     ctx.text-align = \center
     ctx.text-baseline = \middle
     ctx.fill-style = @_style.fg
-    ctx.fill-text "#{@mass}", 0, @_radius-smooth
+    ctx.fill-text "#{@mass}", 0, @radius-smooth
     ctx.restore!
     if ORB.DEBUG
       ctx.save!

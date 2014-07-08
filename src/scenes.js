@@ -27,6 +27,7 @@ ORB.Space = Space = (function(superclass){
   function Space(){
     var i$;
     Space.superclass.call(this);
+    this.planets = [];
     this.camera = {
       zoom: 1,
       x: -400,
@@ -44,9 +45,15 @@ ORB.Space = Space = (function(superclass){
     };
     this.add(this.player = new ORB.Player(this));
     for (i$ = 0; i$ < 10; ++i$) {
-      this.add(new ORB.Planet(this, (Math.random() - 0.5) * 100, (Math.random() - 0.5) * 200, Math.random() > 0.66 ? 2 : 4));
+      this.add(new ORB.Planet(this, (Math.random() - 0.5) * 10, (Math.random() - 0.5) * 200, Math.random() > 0.66 ? 2 : 4));
     }
   }
+  prototype.add = function(entity){
+    superclass.prototype.add.apply(this, arguments);
+    if (entity.mass > 0) {
+      return this.planets.push(entity);
+    }
+  };
   prototype.keyDown = function(code){
     if (code === 65 || code === 37) {
       return this.player.keys.a = true;
@@ -70,9 +77,40 @@ ORB.Space = Space = (function(superclass){
     }
   };
   prototype.tick = function(delta){
+    var i$, to$, i, planetA, j$, to1$, j, planetB, distX, distY, distSq, dist, unitX, unitY, mm, force, ref$, len$, planet, results$ = [];
     superclass.prototype.tick.apply(this, arguments);
     this.camera.moveTowards(this.player);
-    return this.camera.zoom = 1 + 9 * (1 - (this.player._radiusSmooth - 0.798) / 24.73);
+    this.camera.zoom = 1 + 9 * (1 - (this.player.radiusSmooth - 0.798) / 24.73);
+    for (i$ = 0, to$ = this.planets.length; i$ < to$; ++i$) {
+      i = i$;
+      planetA = this.planets[i];
+      for (j$ = i + 1, to1$ = this.planets.length; j$ < to1$; ++j$) {
+        j = j$;
+        planetB = this.planets[j];
+        distX = planetB.x - planetA.x;
+        distY = planetB.y - planetA.y;
+        distSq = distX * distX + distY * distY;
+        dist = Math.sqrt(distSq);
+        unitX = distX / dist;
+        unitY = distY / dist;
+        mm = planetA.mass * planetB.mass;
+        force = distX === 0
+          ? 0
+          : mm / distSq;
+        planetA.netfx += force * unitX;
+        planetA.netfy += force * unitY;
+        planetB.netfx -= force * unitX;
+        planetB.netfy -= force * unitY;
+      }
+    }
+    for (i$ = 0, len$ = (ref$ = this.planets).length; i$ < len$; ++i$) {
+      planet = ref$[i$];
+      planet.x += planet.netfx;
+      planet.y += planet.netfy;
+      planet.netfx = 0;
+      results$.push(planet.netfy = 0);
+    }
+    return results$;
   };
   prototype.render = function(ctx){
     ctx.save();

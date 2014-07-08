@@ -18,6 +18,8 @@ class ORB.Space extends ORB.Scene
   ->
     super!
 
+    @planets = []
+
     @camera =
       # NOTE: Hardcoded canvas dimensions here.
       zoom: 1
@@ -41,7 +43,11 @@ class ORB.Space extends ORB.Scene
     @add @player = new ORB.Player @
 
     for til 10
-      @add new ORB.Planet @, (Math.random! - 0.5) * 100, (Math.random! - 0.5) * 200, if Math.random! > 0.66 then 2 else 4
+      @add new ORB.Planet @, (Math.random! - 0.5) * 10, (Math.random! - 0.5) * 200, if Math.random! > 0.66 then 2 else 4
+
+  add: (entity) ->
+    super ...
+    if entity.mass > 0 then @planets.push entity
 
   key-down: (code) ->
     if code is 65 or code is 37
@@ -66,7 +72,32 @@ class ORB.Space extends ORB.Scene
   tick: (delta) ->
     super ...
     @camera.moveTowards @player
-    @camera.zoom = 1 + 9 * (1 - ((@player._radius-smooth - 0.798) / 24.73))
+    @camera.zoom = 1 + 9 * (1 - ((@player.radius-smooth - 0.798) / 24.73))
+
+    # TODO: Reduce complexity
+    for i til @planets.length
+      planet-a = @planets[i]
+      for j from i+1 til @planets.length
+        planet-b = @planets[j]
+        #if planet-a is planet-b then continue
+        dist-x = planet-b.x - planet-a.x
+        dist-y = planet-b.y - planet-a.y
+        dist-sq = (dist-x * dist-x + dist-y * dist-y)
+        dist = Math.sqrt dist-sq
+        unit-x = dist-x / dist
+        unit-y = dist-y / dist
+        mm = planet-a.mass * planet-b.mass
+        force = if dist-x is 0 then 0 else mm / dist-sq
+        planet-a.netfx += force * unit-x
+        planet-a.netfy += force * unit-y
+        planet-b.netfx -= force * unit-x
+        planet-b.netfy -= force * unit-y
+
+    for planet in @planets
+      planet.x += planet.netfx
+      planet.y += planet.netfy
+      planet.netfx = 0
+      planet.netfy = 0
 
   render: (ctx) ->
     ctx.save!
