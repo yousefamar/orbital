@@ -60,85 +60,109 @@ class ORB.Entity
 class ORB.Planet extends ORB.Entity
   @styles =
     2:
+      pt: 9pt
       fg: \#776e65
       bg: \#eee4da
+      radius: Math.sqrt 2/Math.PI
     4:
+      pt: 13pt
       fg: \#776e65
       bg: \#ede0c8
+      radius: Math.sqrt 4/Math.PI
     8:
+      pt: 18pt
       fg: \#f9f6f2
       bg: \#f2b179
+      radius: Math.sqrt 8/Math.PI
     16:
+      pt: 24pt
       fg: \#f9f6f2
       bg: \#f59563
+      radius: Math.sqrt 16/Math.PI
     32:
+      pt: 32pt
       fg: \#f9f6f2
       bg: \#f67c5f
+      radius: Math.sqrt 32/Math.PI
     64:
+      pt: 50pt
       fg: \#f9f6f2
       bg: \#f65e3b
+      radius: Math.sqrt 64/Math.PI
     128:
+      pt: 50pt
       fg: \#f9f6f2
       bg: \#edcf72
+      radius: Math.sqrt 128/Math.PI
     256:
+      pt: 68pt
       fg: \#f9f6f2
       bg: \#edcc61
+      radius: Math.sqrt 256/Math.PI
     512:
+      pt: 90pt
       fg: \#f9f6f2
       bg: \#edc850
+      radius: Math.sqrt 512/Math.PI
     1024:
+      pt: 105pt
       fg: \#f9f6f2
       bg: \#edc53f
+      radius: Math.sqrt 1024/Math.PI
     2048:
+      pt: 140pt
       fg: \#f9f6f2
       bg: \#edc22e
+      radius: Math.sqrt 2048/Math.PI
 
   (scene, x, y, @mass) ->
     super scene, x, y
     @radius = Math.sqrt mass/Math.PI
-
-  radius-changed = false
+    @_radius-smooth = 0
+    @_radius-changed = true
+    @_style = @@styles[mass]
 
   mass:~
     -> @_mass
     (mass) ->
       @_mass = mass
       @radius = Math.sqrt mass/Math.PI
-      radius-changed := true
+      @_radius-changed = true
+      @_style = @@styles[mass]
 
   tick: (delta) ->
 
-  render: do ->
-    radius-smooth = 0
-    smooth-radius = !->
-      radius-smooth += 0.2 * (it - radius-smooth)
-      if Math.abs (it - radius-smooth) < 0.01px then radius-changed := false
-
-    (ctx) ->
-      if radius-changed then smooth-radius @radius
-      r-scaled = radius-smooth * 10
+  render: (ctx) ->
+    if @_radius-changed
+      @_radius-smooth += 0.2 * (@_style.radius - @_radius-smooth)
+      if Math.abs (@_style.radius - @_radius-smooth) < 0.01px then @_radius-changed = false
+    ctx.save!
+    ctx.translate @x, @y
+    ctx.begin-path!
+    ctx.arc 0, 0, @_radius-smooth, 0, 2 * Math.PI
+    ctx.fill-style = @_style.bg
+    ctx.fill!
+    ctx.scale 0.1, 0.1
+    ctx.font = "#{@_style.pt - 10 * (@_style.radius - @_radius-smooth)}pt Courier"
+    ctx.text-align = \center
+    ctx.text-baseline = \middle
+    ctx.fill-style = @_style.fg
+    ctx.fill-text "#{@mass}", 0, @_radius-smooth
+    ctx.restore!
+    if ORB.DEBUG
       ctx.save!
-      ctx.begin-path!
-      ctx.arc @x, @y, r-scaled, 0, 2 * Math.PI
-      ctx.fill-style = @@styles[@mass].bg
-      ctx.fill!
-      ctx.font = "#{r-scaled*1.33}pt Thaoma"
-      ctx.text-align = \center
-      ctx.fill-style = @@styles[@mass].fg
-      ctx.fill-text "#{@mass}", @x, @y + r-scaled*0.66
+      ctx.font = '8px Arial'
+      ctx.fill-style = \white
+      ctx.fill-text "(#{@x}, #{@y})", @x, @y
       ctx.restore!
-      if ORB.DEBUG
-        ctx.save!
-        ctx.font = '8px Arial'
-        ctx.fill-style = \white
-        ctx.fill-text "(#{@x}, #{@y})", @x, @y
-        ctx.restore!
-      true
+    true
 
 
 class ORB.Player extends ORB.Planet
   (scene) ->
     super scene, 0px, 0px, 2N
+    #self = @
+    #set-interval (-> if self.mass < 2048 then self.mass *= 2), 1000
 
     @keys =
       w: false
@@ -157,7 +181,7 @@ class ORB.Player extends ORB.Planet
 
   tick: (delta) ->
     super ...
-    move-speed = 4ppt
+    move-speed = 0.5 + 0.005*@mass # pixels per tick
     if @keys.w then @y -= move-speed
     if @keys.a then @x -= move-speed
     if @keys.s then @y += move-speed

@@ -20,23 +20,28 @@ class ORB.Space extends ORB.Scene
 
     @camera =
       # NOTE: Hardcoded canvas dimensions here.
+      zoom: 1
       x: -400px
       y: -225px
       moveTowards: (entity, speed) ->
-        speed = speed || 0.05
+        speed = speed || 0.1
+        speed /= 1 + @zoom/10
         # NOTE: Hardcoded canvas dimensions here.
-        @x += speed * (entity.x-400-@x)
-        @y += speed * (entity.y-225-@y)
+        @x += speed * (@zoom*entity.x- @x - 400px)
+        @y += speed * (@zoom*entity.y- @y - 225px)
         #if @x < 0 then @x = 0
         #if @x > @limitX then @x = @limitX
         #if @y < 0 then @y = 0
         #if @y > @limitY then @y = @limitY
       applyTransform: (ctx) ->
         ctx.translate -@x, -@y
+        ctx.scale @zoom, @zoom
+        #ctx.translate -@x, -@y
 
-    # TODO: Spawn scene entities here
-    #@add(@terrain = new ORB.Terrain(@ map))
     @add @player = new ORB.Player @
+
+    for til 10
+      @add new ORB.Planet @, (Math.random! - 0.5) * 100, (Math.random! - 0.5) * 200, if Math.random! > 0.66 then 2 else 4
 
   key-down: (code) ->
     if code is 65 or code is 37
@@ -61,6 +66,7 @@ class ORB.Space extends ORB.Scene
   tick: (delta) ->
     super ...
     @camera.moveTowards @player
+    @camera.zoom = 1 + 9 * (1 - ((@player._radius-smooth - 0.798) / 24.73))
 
   render: (ctx) ->
     ctx.save!

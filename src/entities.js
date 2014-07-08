@@ -51,59 +51,83 @@ ORB.Entity = Entity = (function(){
   return Entity;
 }());
 ORB.Planet = Planet = (function(superclass){
-  var radiusChanged, prototype = extend$((import$(Planet, superclass).displayName = 'Planet', Planet), superclass).prototype, constructor = Planet;
+  var prototype = extend$((import$(Planet, superclass).displayName = 'Planet', Planet), superclass).prototype, constructor = Planet;
   Planet.styles = {
     2: {
+      pt: 9,
       fg: '#776e65',
-      bg: '#eee4da'
+      bg: '#eee4da',
+      radius: Math.sqrt(2 / Math.PI)
     },
     4: {
+      pt: 13,
       fg: '#776e65',
-      bg: '#ede0c8'
+      bg: '#ede0c8',
+      radius: Math.sqrt(4 / Math.PI)
     },
     8: {
+      pt: 18,
       fg: '#f9f6f2',
-      bg: '#f2b179'
+      bg: '#f2b179',
+      radius: Math.sqrt(8 / Math.PI)
     },
     16: {
+      pt: 24,
       fg: '#f9f6f2',
-      bg: '#f59563'
+      bg: '#f59563',
+      radius: Math.sqrt(16 / Math.PI)
     },
     32: {
+      pt: 32,
       fg: '#f9f6f2',
-      bg: '#f67c5f'
+      bg: '#f67c5f',
+      radius: Math.sqrt(32 / Math.PI)
     },
     64: {
+      pt: 50,
       fg: '#f9f6f2',
-      bg: '#f65e3b'
+      bg: '#f65e3b',
+      radius: Math.sqrt(64 / Math.PI)
     },
     128: {
+      pt: 50,
       fg: '#f9f6f2',
-      bg: '#edcf72'
+      bg: '#edcf72',
+      radius: Math.sqrt(128 / Math.PI)
     },
     256: {
+      pt: 68,
       fg: '#f9f6f2',
-      bg: '#edcc61'
+      bg: '#edcc61',
+      radius: Math.sqrt(256 / Math.PI)
     },
     512: {
+      pt: 90,
       fg: '#f9f6f2',
-      bg: '#edc850'
+      bg: '#edc850',
+      radius: Math.sqrt(512 / Math.PI)
     },
     1024: {
+      pt: 105,
       fg: '#f9f6f2',
-      bg: '#edc53f'
+      bg: '#edc53f',
+      radius: Math.sqrt(1024 / Math.PI)
     },
     2048: {
+      pt: 140,
       fg: '#f9f6f2',
-      bg: '#edc22e'
+      bg: '#edc22e',
+      radius: Math.sqrt(2048 / Math.PI)
     }
   };
   function Planet(scene, x, y, mass){
     this.mass = mass;
     Planet.superclass.call(this, scene, x, y);
     this.radius = Math.sqrt(mass / Math.PI);
+    this._radiusSmooth = 0;
+    this._radiusChanged = true;
+    this._style = constructor.styles[mass];
   }
-  radiusChanged = false;
   Object.defineProperty(prototype, 'mass', {
     get: function(){
       return this._mass;
@@ -111,47 +135,42 @@ ORB.Planet = Planet = (function(superclass){
     set: function(mass){
       this._mass = mass;
       this.radius = Math.sqrt(mass / Math.PI);
-      radiusChanged = true;
+      this._radiusChanged = true;
+      this._style = constructor.styles[mass];
     },
     configurable: true,
     enumerable: true
   });
   prototype.tick = function(delta){};
-  prototype.render = function(){
-    var radiusSmooth, smoothRadius;
-    radiusSmooth = 0;
-    smoothRadius = function(it){
-      radiusSmooth += 0.2 * (it - radiusSmooth);
-      if (Math.abs(it - radiusSmooth < 0.01)) {
-        radiusChanged = false;
+  prototype.render = function(ctx){
+    if (this._radiusChanged) {
+      this._radiusSmooth += 0.2 * (this._style.radius - this._radiusSmooth);
+      if (Math.abs(this._style.radius - this._radiusSmooth < 0.01)) {
+        this._radiusChanged = false;
       }
-    };
-    return function(ctx){
-      var rScaled;
-      if (radiusChanged) {
-        smoothRadius(this.radius);
-      }
-      rScaled = radiusSmooth * 10;
+    }
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.beginPath();
+    ctx.arc(0, 0, this._radiusSmooth, 0, 2 * Math.PI);
+    ctx.fillStyle = this._style.bg;
+    ctx.fill();
+    ctx.scale(0.1, 0.1);
+    ctx.font = (this._style.pt - 10 * (this._style.radius - this._radiusSmooth)) + "pt Courier";
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = this._style.fg;
+    ctx.fillText(this.mass + "", 0, this._radiusSmooth);
+    ctx.restore();
+    if (ORB.DEBUG) {
       ctx.save();
-      ctx.beginPath();
-      ctx.arc(this.x, this.y, rScaled, 0, 2 * Math.PI);
-      ctx.fillStyle = constructor.styles[this.mass].bg;
-      ctx.fill();
-      ctx.font = rScaled * 1.33 + "pt Thaoma";
-      ctx.textAlign = 'center';
-      ctx.fillStyle = constructor.styles[this.mass].fg;
-      ctx.fillText(this.mass + "", this.x, this.y + rScaled * 0.66);
+      ctx.font = '8px Arial';
+      ctx.fillStyle = 'white';
+      ctx.fillText("(" + this.x + ", " + this.y + ")", this.x, this.y);
       ctx.restore();
-      if (ORB.DEBUG) {
-        ctx.save();
-        ctx.font = '8px Arial';
-        ctx.fillStyle = 'white';
-        ctx.fillText("(" + this.x + ", " + this.y + ")", this.x, this.y);
-        ctx.restore();
-      }
-      return true;
-    };
-  }();
+    }
+    return true;
+  };
   return Planet;
 }(ORB.Entity));
 ORB.Player = Player = (function(superclass){
@@ -176,7 +195,7 @@ ORB.Player = Player = (function(superclass){
   prototype.tick = function(delta){
     var moveSpeed;
     superclass.prototype.tick.apply(this, arguments);
-    moveSpeed = 4;
+    moveSpeed = 0.5 + 0.005 * this.mass;
     if (this.keys.w) {
       this.y -= moveSpeed;
     }

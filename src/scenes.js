@@ -25,20 +25,27 @@ ORB.Scene = Scene = (function(){
 ORB.Space = Space = (function(superclass){
   var prototype = extend$((import$(Space, superclass).displayName = 'Space', Space), superclass).prototype, constructor = Space;
   function Space(){
+    var i$;
     Space.superclass.call(this);
     this.camera = {
+      zoom: 1,
       x: -400,
       y: -225,
       moveTowards: function(entity, speed){
-        speed = speed || 0.05;
-        this.x += speed * (entity.x - 400 - this.x);
-        return this.y += speed * (entity.y - 225 - this.y);
+        speed = speed || 0.1;
+        speed /= 1 + this.zoom / 10;
+        this.x += speed * (this.zoom * entity.x - this.x - 400);
+        return this.y += speed * (this.zoom * entity.y - this.y - 225);
       },
       applyTransform: function(ctx){
-        return ctx.translate(-this.x, -this.y);
+        ctx.translate(-this.x, -this.y);
+        return ctx.scale(this.zoom, this.zoom);
       }
     };
     this.add(this.player = new ORB.Player(this));
+    for (i$ = 0; i$ < 10; ++i$) {
+      this.add(new ORB.Planet(this, (Math.random() - 0.5) * 100, (Math.random() - 0.5) * 200, Math.random() > 0.66 ? 2 : 4));
+    }
   }
   prototype.keyDown = function(code){
     if (code === 65 || code === 37) {
@@ -64,7 +71,8 @@ ORB.Space = Space = (function(superclass){
   };
   prototype.tick = function(delta){
     superclass.prototype.tick.apply(this, arguments);
-    return this.camera.moveTowards(this.player);
+    this.camera.moveTowards(this.player);
+    return this.camera.zoom = 1 + 9 * (1 - (this.player._radiusSmooth - 0.798) / 24.73);
   };
   prototype.render = function(ctx){
     ctx.save();

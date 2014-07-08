@@ -1,5 +1,8 @@
 'use strict'
 
+window.log = -> console.log it
+window.err = -> console.err it
+
 class window.List
   ->
     @size = 0
