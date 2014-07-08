@@ -47,7 +47,7 @@ class ORB.Space extends ORB.Scene
 
   add: (entity) ->
     super ...
-    if entity.mass > 0 then @planets.push entity
+    if entity instanceof ORB.Planet then @planets.push entity
 
   key-down: (code) ->
     if code is 65 or code is 37
@@ -87,17 +87,39 @@ class ORB.Space extends ORB.Scene
         unit-x = dist-x / dist
         unit-y = dist-y / dist
         mm = planet-a.mass * planet-b.mass
-        force = if dist-x is 0 then 0 else mm / dist-sq
-        planet-a.netfx += force * unit-x
-        planet-a.netfy += force * unit-y
-        planet-b.netfx -= force * unit-x
-        planet-b.netfy -= force * unit-y
+        force = if dist-x is 0 then 0 else 0.001 * mm / dist-sq
+        planet-a.fx += force * unit-x
+        planet-a.fy += force * unit-y
+        planet-b.fx -= force * unit-x
+        planet-b.fy -= force * unit-y
 
     for planet in @planets
-      planet.x += planet.netfx
-      planet.y += planet.netfy
-      planet.netfx = 0
-      planet.netfy = 0
+      planet.prev-x = planet.x
+      planet.prev-y = planet.y
+      planet.vx += planet.fx
+      planet.vy += planet.fy
+      planet.x += planet.vx
+      planet.y += planet.vy
+      planet.fx = 0
+      planet.fy = 0
+
+    for i til @planets.length
+      planet-a = @planets[i]
+      for j from i+1 til @planets.length
+        planet-b = @planets[j]
+        if planet-a.collides-with planet-b
+          inci-x = planet-a.x - planet-a.prev-x
+          inci-y = planet-a.y - planet-a.prev-y
+          dist-x = planet-b.x - planet-a.x
+          dist-y = planet-b.y - planet-a.y
+          dot = inci-x * dist-x + inci-y * dist-y
+          dist-sq = dist-x * dist-x + dist-y * dist-y
+          refl-x = inci-x - (2 * dot) * dist-x / dist-sq
+          refl-y = inci-y - (2 * dot) * dist-y / dist-sq
+          planet-a.vx += refl-x
+          planet-a.vy += refl-y
+          planet-b.vx -= refl-x
+          planet-b.vy -= refl-y
 
   render: (ctx) ->
     ctx.save!

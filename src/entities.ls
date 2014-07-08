@@ -117,8 +117,10 @@ class ORB.Planet extends ORB.Entity
     super scene, x, y
     @radius = Math.sqrt mass/Math.PI
     @radius-smooth = 0
-    @netfx = 0
-    @netfy = 0
+    @vx = 0
+    @vy = 0
+    @fx = 0
+    @fy = 0
     @_radius-changed = true
     @_style = @@styles[mass]
 
@@ -129,6 +131,13 @@ class ORB.Planet extends ORB.Entity
       @radius = Math.sqrt mass/Math.PI
       @_radius-changed = true
       @_style = @@styles[mass]
+
+  collides-with: (planet) ->
+    dist-x = Math.abs @x - planet.x
+    dist-y = Math.abs @y - planet.y
+    radii = @radius-smooth + planet.radius-smooth
+    if dist-x >= radii or dist-y >= radii then return false
+    dist-x * dist-x + dist-y * dist-y < radii * radii
 
   tick: (delta) ->
 
@@ -181,11 +190,11 @@ class ORB.Player extends ORB.Planet
 
   tick: (delta) ->
     super ...
-    move-speed = 0.5 + 0.005*@mass # pixels per tick
-    if @keys.w then @y -= move-speed
-    if @keys.a then @x -= move-speed
-    if @keys.s then @y += move-speed
-    if @keys.d then @x += move-speed
+    move-speed = 0.02 * (0.5 + 0.005*@mass) # pixels per tick
+    if @keys.w then @vy -= move-speed
+    if @keys.a then @vx -= move-speed
+    if @keys.s then @vy += move-speed
+    if @keys.d then @vx += move-speed
     true
 
 #	var terrain = this.scene.terrain;

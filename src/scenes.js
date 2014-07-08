@@ -50,7 +50,7 @@ ORB.Space = Space = (function(superclass){
   }
   prototype.add = function(entity){
     superclass.prototype.add.apply(this, arguments);
-    if (entity.mass > 0) {
+    if (entity instanceof ORB.Planet) {
       return this.planets.push(entity);
     }
   };
@@ -77,7 +77,7 @@ ORB.Space = Space = (function(superclass){
     }
   };
   prototype.tick = function(delta){
-    var i$, to$, i, planetA, j$, to1$, j, planetB, distX, distY, distSq, dist, unitX, unitY, mm, force, ref$, len$, planet, results$ = [];
+    var i$, to$, i, planetA, j$, to1$, j, planetB, distX, distY, distSq, dist, unitX, unitY, mm, force, ref$, len$, planet, lresult$, inciX, inciY, dot, reflX, reflY, results$ = [];
     superclass.prototype.tick.apply(this, arguments);
     this.camera.moveTowards(this.player);
     this.camera.zoom = 1 + 9 * (1 - (this.player.radiusSmooth - 0.798) / 24.73);
@@ -96,19 +96,47 @@ ORB.Space = Space = (function(superclass){
         mm = planetA.mass * planetB.mass;
         force = distX === 0
           ? 0
-          : mm / distSq;
-        planetA.netfx += force * unitX;
-        planetA.netfy += force * unitY;
-        planetB.netfx -= force * unitX;
-        planetB.netfy -= force * unitY;
+          : 0.001 * mm / distSq;
+        planetA.fx += force * unitX;
+        planetA.fy += force * unitY;
+        planetB.fx -= force * unitX;
+        planetB.fy -= force * unitY;
       }
     }
     for (i$ = 0, len$ = (ref$ = this.planets).length; i$ < len$; ++i$) {
       planet = ref$[i$];
-      planet.x += planet.netfx;
-      planet.y += planet.netfy;
-      planet.netfx = 0;
-      results$.push(planet.netfy = 0);
+      planet.prevX = planet.x;
+      planet.prevY = planet.y;
+      planet.vx += planet.fx;
+      planet.vy += planet.fy;
+      planet.x += planet.vx;
+      planet.y += planet.vy;
+      planet.fx = 0;
+      planet.fy = 0;
+    }
+    for (i$ = 0, to$ = this.planets.length; i$ < to$; ++i$) {
+      i = i$;
+      lresult$ = [];
+      planetA = this.planets[i];
+      for (j$ = i + 1, to1$ = this.planets.length; j$ < to1$; ++j$) {
+        j = j$;
+        planetB = this.planets[j];
+        if (planetA.collidesWith(planetB)) {
+          inciX = planetA.x - planetA.prevX;
+          inciY = planetA.y - planetA.prevY;
+          distX = planetB.x - planetA.x;
+          distY = planetB.y - planetA.y;
+          dot = inciX * distX + inciY * distY;
+          distSq = distX * distX + distY * distY;
+          reflX = inciX - (2 * dot) * distX / distSq;
+          reflY = inciY - (2 * dot) * distY / distSq;
+          planetA.vx += reflX;
+          planetA.vy += reflY;
+          planetB.vx -= reflX;
+          lresult$.push(planetB.vy -= reflY);
+        }
+      }
+      results$.push(lresult$);
     }
     return results$;
   };

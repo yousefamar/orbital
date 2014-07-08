@@ -119,8 +119,10 @@ ORB.Planet = Planet = (function(superclass){
     Planet.superclass.call(this, scene, x, y);
     this.radius = Math.sqrt(mass / Math.PI);
     this.radiusSmooth = 0;
-    this.netfx = 0;
-    this.netfy = 0;
+    this.vx = 0;
+    this.vy = 0;
+    this.fx = 0;
+    this.fy = 0;
     this._radiusChanged = true;
     this._style = constructor.styles[mass];
   }
@@ -137,6 +139,16 @@ ORB.Planet = Planet = (function(superclass){
     configurable: true,
     enumerable: true
   });
+  prototype.collidesWith = function(planet){
+    var distX, distY, radii;
+    distX = Math.abs(this.x - planet.x);
+    distY = Math.abs(this.y - planet.y);
+    radii = this.radiusSmooth + planet.radiusSmooth;
+    if (distX >= radii || distY >= radii) {
+      return false;
+    }
+    return distX * distX + distY * distY < radii * radii;
+  };
   prototype.tick = function(delta){};
   prototype.render = function(ctx){
     if (this._radiusChanged) {
@@ -191,18 +203,18 @@ ORB.Player = Player = (function(superclass){
   prototype.tick = function(delta){
     var moveSpeed;
     superclass.prototype.tick.apply(this, arguments);
-    moveSpeed = 0.5 + 0.005 * this.mass;
+    moveSpeed = 0.02 * (0.5 + 0.005 * this.mass);
     if (this.keys.w) {
-      this.y -= moveSpeed;
+      this.vy -= moveSpeed;
     }
     if (this.keys.a) {
-      this.x -= moveSpeed;
+      this.vx -= moveSpeed;
     }
     if (this.keys.s) {
-      this.y += moveSpeed;
+      this.vy += moveSpeed;
     }
     if (this.keys.d) {
-      this.x += moveSpeed;
+      this.vx += moveSpeed;
     }
     return true;
   };
