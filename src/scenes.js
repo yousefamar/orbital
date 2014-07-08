@@ -77,7 +77,7 @@ ORB.Space = Space = (function(superclass){
     }
   };
   prototype.tick = function(delta){
-    var i$, to$, i, planetA, j$, to1$, j, planetB, distX, distY, distSq, dist, unitX, unitY, mm, force, ref$, len$, planet, lresult$, absorber, absorbee, absorbeeId, inciX, inciY, dot, reflX, reflY, results$ = [];
+    var i$, to$, i, planetA, j$, to1$, j, planetB, distX, distY, distSq, dist, unitX, unitY, mm, force, ref$, len$, planet, lresult$, lresult1$, absorber, absorbee, absorbeeId, k$, inciX, inciY, dot, reflX, reflY, results$ = [];
     superclass.prototype.tick.apply(this, arguments);
     this.camera.moveTowards(this.player);
     this.camera.zoom = 1 + 9 * (1 - (this.player.radiusSmooth - 0.798) / 24.73);
@@ -120,6 +120,7 @@ ORB.Space = Space = (function(superclass){
       planetA = this.planets[i];
       for (j$ = i + 1, to1$ = this.planets.length; j$ < to1$; ++j$) {
         j = j$;
+        lresult1$ = [];
         planetB = this.planets[j];
         if (planetA.collidesWith(planetB)) {
           if (planetA.mass === planetB.mass) {
@@ -136,7 +137,9 @@ ORB.Space = Space = (function(superclass){
             to$--;
             to1$--;
             absorber.mass *= 2;
-            lresult$.push(this.add(new ORB.Planet(this, this.player.x + (Math.random() - 0.5) * 100, this.player.y + (Math.random() - 0.5) * 100, Math.random() > 0.66 ? 2 : 4)));
+            for (k$ = 0; k$ < 2; ++k$) {
+              lresult1$.push(this.add(new ORB.Planet(this, this.player.x + (Math.random() - 0.5) * 100, this.player.y + (Math.random() - 0.5) * 100, Math.random() > 0.66 ? 2 : 4)));
+            }
           } else {
             inciX = planetA.x - planetA.prevX;
             inciY = planetA.y - planetA.prevY;
@@ -149,9 +152,10 @@ ORB.Space = Space = (function(superclass){
             planetA.vx += reflX;
             planetA.vy += reflY;
             planetB.vx -= reflX;
-            lresult$.push(planetB.vy -= reflY);
+            lresult1$.push(planetB.vy -= reflY);
           }
         }
+        lresult$.push(lresult1$);
       }
       results$.push(lresult$);
     }

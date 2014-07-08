@@ -122,7 +122,8 @@ class ORB.Space extends ORB.Scene
             to$--
             to1$--
             absorber.mass *= 2
-            @add new ORB.Planet @, @player.x + (Math.random! - 0.5) * 100, @player.y + (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
+            for til 2
+              @add new ORB.Planet @, @player.x + (Math.random! - 0.5) * 100, @player.y + (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
           else
             inci-x = planet-a.x - planet-a.prev-x
             inci-y = planet-a.y - planet-a.prev-y
