@@ -9,7 +9,7 @@ request-anim-frame = @request-animation-frame
     || @moz-request-animation-frame
     || (callback) !->	@set-timeout callback, options.tick-interval-ms
 
-window.main = do ->
+window.main = do
 
   ctx = null
 
