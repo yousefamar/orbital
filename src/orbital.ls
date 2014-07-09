@@ -22,11 +22,11 @@ window.main = do ->
   last-tick = Date.now!
   tick = !->
     # FIXME: Chrome throttles the interval down to 1s on inactive tabs.
-    setTimeout tick, options.tick-interval-ms
+    set-timeout tick, options.tick-interval-ms
 
     now = Date.now!
     scene.tick (now - last-tick)
-    lastTick := now
+    last-tick := now
 
   render = !->
     request-anim-frame render
@@ -48,5 +48,5 @@ window.main = do ->
     document.body.add-event-listener \keyup, ->
       (gui.key-up it.key-code) || (scene.key-up it.key-code)
 
-    setTimeout tick, options.tick-interval-ms
+    set-timeout tick, options.tick-interval-ms
     request-anim-frame render

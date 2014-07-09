@@ -27,7 +27,7 @@ class Space extends Scene
       zoom: 1
       x: -400px
       y: -225px
-      moveTowards: (entity, speed) ->
+      move-towards: (entity, speed) ->
         speed = speed || 0.1
         speed /= 1 + @zoom/10
         # NOTE: Hardcoded canvas dimensions here.
@@ -37,7 +37,7 @@ class Space extends Scene
         #if @x > @limitX then @x = @limitX
         #if @y < 0 then @y = 0
         #if @y > @limitY then @y = @limitY
-      applyTransform: (ctx) ->
+      apply-transform: (ctx) ->
         ctx.translate -@x, -@y
         ctx.scale @zoom, @zoom
         #ctx.translate -@x, -@y
@@ -142,7 +142,7 @@ class Space extends Scene
 
   render: (ctx) ->
     ctx.save!
-    @camera.applyTransform ctx
+    @camera.apply-transform ctx
     super ...
     ctx.restore!
 
