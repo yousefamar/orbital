@@ -1,4 +1,6 @@
-class ORB.EntityManager
+{ List } = require \./utils.ls
+
+class EntityManager
   (@scene) ->
     @tick-queue = new List!
     @render-queue = new List!
@@ -12,16 +14,16 @@ class ORB.EntityManager
       entity = @tick-queue.poll!
       (entity.tick delta) && @tick-queue.add entity
 
-  render: (ctx) ->
+  render: (ctx, debug=false) ->
     for til @render-queue.size
       entity = @render-queue.poll!
-      (entity.render ctx) && @render-queue.add entity
+      (entity.render ctx, debug) && @render-queue.add entity
 
-class ORB.Entity
+class Entity
   (@scene, @x, @y) ->
 
 
-class ORB.Planet extends ORB.Entity
+class Planet extends Entity
   @styles =
     2:
       pt: 9pt
@@ -107,7 +109,7 @@ class ORB.Planet extends ORB.Entity
 
   tick: (delta) ->
 
-  render: (ctx) ->
+  render: (ctx, debug=false) ->
     if @absorbed then return false
     if @_radius-changed
       @radius-smooth += 0.2 * (@_style.radius - @radius-smooth)
@@ -125,7 +127,7 @@ class ORB.Planet extends ORB.Entity
     ctx.fill-style = @_style.fg
     ctx.fill-text "#{@mass}", 0, @radius-smooth
     ctx.restore!
-    if ORB.DEBUG
+    if debug
       ctx.save!
       ctx.font = '8px Arial'
       ctx.fill-style = \white
@@ -134,7 +136,7 @@ class ORB.Planet extends ORB.Entity
     true
 
 
-class ORB.Player extends ORB.Planet
+class Player extends Planet
   (scene) ->
     super scene, 0px, 0px, 2N
     #self = @
@@ -163,3 +165,5 @@ class ORB.Player extends ORB.Planet
     if @keys.s then @vy += move-speed
     if @keys.d then @vx += move-speed
     true
+
+module.exports = { Player, Planet, EntityManager }

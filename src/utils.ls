@@ -3,7 +3,7 @@
 window.log = -> console.log it
 window.err = -> console.err it
 
-class window.List
+class List
   ->
     @size = 0
 
@@ -41,3 +41,5 @@ class window.List
         return true
 
     false
+
+module.exports = { List }

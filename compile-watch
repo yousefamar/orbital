@@ -1,0 +1,2 @@
+#!/bin/sh
+watchify --verbose --debug -t liveify -o static/bundle.js src/orbital.ls

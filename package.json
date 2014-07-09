@@ -1,0 +1,22 @@
+{
+  "name": "Orbital",
+  "version": "0.0.0",
+  "description": "2048 in space",
+  "main": "static/index.html",
+  "devDependencies" : {
+      "liveify": "~0.4.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Paraknight/orbital.git"
+  },
+  "author": "",
+  "license": "Proprietary",
+  "bugs": {
+    "url": "https://github.com/Paraknight/orbital/issues"
+  },
+  "homepage": "https://github.com/Paraknight/orbital"
+}

@@ -1,6 +1,8 @@
-class ORB.Scene
+{ EntityManager, Player, Planet } = require \./entities.ls
+
+class Scene
   ->
-    @entity-manager = new ORB.EntityManager @
+    @entity-manager = new EntityManager @
 
   add: (entity) -> @entity-manager.add entity
 
@@ -14,7 +16,7 @@ class ORB.Scene
   render: (ctx) ->
     @entity-manager.render ctx
 
-class ORB.Space extends ORB.Scene
+class Space extends Scene
   ->
     super!
 
@@ -40,14 +42,14 @@ class ORB.Space extends ORB.Scene
         ctx.scale @zoom, @zoom
         #ctx.translate -@x, -@y
 
-    @add @player = new ORB.Player @
+    @add @player = new Player @
 
     for til 50
-      @add new ORB.Planet @, (Math.random! - 0.5) * 100, (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
+      @add new Planet @, (Math.random! - 0.5) * 100, (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
 
   add: (entity) ->
     super ...
-    if entity instanceof ORB.Planet then @planets.push entity
+    if entity instanceof Planet then @planets.push entity
 
   key-down: (code) ->
     if code is 65 or code is 37
@@ -123,7 +125,7 @@ class ORB.Space extends ORB.Scene
             to1$--
             absorber.mass *= 2
             for til 2
-              @add new ORB.Planet @, @player.x + (Math.random! - 0.5) * 100, @player.y + (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
+              @add new Planet @, @player.x + (Math.random! - 0.5) * 100, @player.y + (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
           else
             inci-x = planet-a.x - planet-a.prev-x
             inci-y = planet-a.y - planet-a.prev-y
@@ -143,3 +145,5 @@ class ORB.Space extends ORB.Scene
     @camera.applyTransform ctx
     super ...
     ctx.restore!
+
+module.exports = { Scene, Space }
