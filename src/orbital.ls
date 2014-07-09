@@ -1,13 +1,13 @@
 { Scene, Space } = require \./scenes.ls
 
 options =
-  #DEBUG: true
-  TICK_INTERVAL_MS: 1000ms/60
+  debug: false
+  tick-interval-ms: 1000ms/60
 
 request-anim-frame = @request-animation-frame
     || @webkit-request-animation-frame
     || @moz-request-animation-frame
-    || (callback) !->	@set-timeout callback, options.TICK_INTERVAL_MS
+    || (callback) !->	@set-timeout callback, options.tick-interval-ms
 
 window.main = do ->
 
@@ -22,7 +22,7 @@ window.main = do ->
   last-tick = Date.now!
   tick = !->
     # FIXME: Chrome throttles the interval down to 1s on inactive tabs.
-    setTimeout tick, options.TICK_INTERVAL_MS
+    setTimeout tick, options.tick-interval-ms
 
     now = Date.now!
     scene.tick (now - last-tick)
@@ -33,7 +33,7 @@ window.main = do ->
     ctx.fill-style = \black
     ctx.fill-rect 0, 0, ctx.canvas.width, ctx.canvas.height
 
-    scene.render ctx, options.DEBUG
+    scene.render ctx, options.debug
     gui.render ctx
 
   ->
@@ -48,5 +48,5 @@ window.main = do ->
     document.body.add-event-listener \keyup, ->
       (gui.key-up it.key-code) || (scene.key-up it.key-code)
 
-    setTimeout tick, options.TICK_INTERVAL_MS
+    setTimeout tick, options.tick-interval-ms
     request-anim-frame render
