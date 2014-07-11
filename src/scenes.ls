@@ -52,24 +52,18 @@ class Space extends Scene
     if entity instanceof Planet then @planets.push entity
 
   key-down: (code) ->
-    if code is 65 or code is 37
-      @player.keys.a = true
-    else if code is 68 or code is 39
-      @player.keys.d = true
-    else if code is 87 or code is 38
-      @player.keys.w = true
-    else if code is 83 or code is 40
-      @player.keys.s = true
+    @player.keys
+      ..a = true if code in [ 65 37 ]
+      ..d = true if code in [ 68 39 ]
+      ..w = true if code in [ 87 38 ]
+      ..s = true if code in [ 83 40 ]
 
   key-up: (code) ->
-    if code is 65 or code is 37
-      @player.keys.a = false
-    else if code is 68 or code is 39
-      @player.keys.d = false
-    else if code is 87 or code is 38
-      @player.keys.w = false
-    else if code is 83 or code is 40
-      @player.keys.s = false
+    @player.keys
+      ..a = false if code in [ 65 37 ]
+      ..d = false if code in [ 68 39 ]
+      ..w = false if code in [ 87 38 ]
+      ..s = false if code in [ 83 40 ]
 
   tick: (delta) ->
     super ...
