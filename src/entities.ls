@@ -37,7 +37,7 @@ class Entity
 class Planet extends Entity
 
   fix-def = new FixtureDef
-    ..density = 1
+    ..density = 10
     ..restitution = 1
   body-def = new BodyDef
     ..type = Body.b2_dynamic-body
@@ -95,13 +95,6 @@ class Planet extends Entity
                             a physics world"
     super scene, x, y
 
-    /*
-    @vx = 0
-    @vy = 0
-    @fx = 0
-    @fy = 0
-    */
-
     body-def
       ..position
         ..x = x
@@ -134,7 +127,8 @@ class Planet extends Entity
       @_mass = mass
 
       # Box2D can't resize fixtures, so we replace it with one of right radius.
-      @radius = Math.sqrt mass / Math.PI
+      # Area = 2 * PI * radius^2, so radius = sqrt ( Area / PI * 2 )
+      @radius = Math.sqrt (mass / Math.PI)
       fix-def.shape = new CircleShape @radius
       @body.DestroyFixture @_circle-fixture if @_circle-fixture
       @_circle-fixture = @body.CreateFixture fix-def
@@ -191,24 +185,11 @@ class Player extends Planet
     @keys.s = false
     @keys.d = false
 
-    /*
-    @x = 0
-    @y = 0
-    */
-
   tick: (delta) ->
     super ...
-    /*
-    move-speed = 0.02 * (0.5 + 0.005*@mass) # pixels per tick
-    if @keys.w then @vy -= move-speed
-    if @keys.a then @vx -= move-speed
-    if @keys.s then @vy += move-speed
-    if @keys.d then @vx += move-speed
-    */
-
     # FIXME Use constant force, but just change its direction. (At the moment,
     # the total force applied is doubled if moving diagonally.)
-    move-force = 0.1newton * @mass
+    move-force = 0.001 * @mass
     x = y = 0
     @keys.w and y -= move-force
     @keys.s and y += move-force
