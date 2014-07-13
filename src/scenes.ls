@@ -1,4 +1,8 @@
 { EntityManager, Player, Planet } = require \./entities.ls
+{
+  Common : Math : b2Vec2 : Vector
+  Dynamics : b2World : World
+} = require "./Box2dWeb-2.1.a.3.js"
 
 class Scene
   ->
@@ -20,6 +24,9 @@ class Space extends Scene
   ->
     super!
 
+    @world = new World do
+      new Vector! # no gravity
+      true        # objects may sleep
     @planets = []
 
     @camera =
@@ -27,12 +34,12 @@ class Space extends Scene
       zoom: 1
       x: -400px
       y: -225px
-      move-towards: (entity, speed) ->
-        speed = speed || 0.1
+      move-towards: (entity, speed=0.1) ->
         speed /= 1 + @zoom/10
         # NOTE: Hardcoded canvas dimensions here.
-        @x += speed * (@zoom*entity.x- @x - 400px)
-        @y += speed * (@zoom*entity.y- @y - 225px)
+        { x : entity-x, y : entity-y } = entity.position
+        @x += speed * (@zoom*entity-x - @x - 400px)
+        @y += speed * (@zoom*entity-y - @y - 225px)
         #if @x < 0 then @x = 0
         #if @x > @limitX then @x = @limitX
         #if @y < 0 then @y = 0
@@ -67,9 +74,10 @@ class Space extends Scene
 
   tick: (delta) ->
     super ...
-    @camera.moveTowards @player
+    @camera.move-towards @player
     @camera.zoom = 1 + 9 * (1 - ((@player.radius-smooth - 0.798) / 24.73))
 
+    /*
     # TODO: Reduce complexity
     for i til @planets.length
       planet-a = @planets[i]
@@ -133,6 +141,11 @@ class Space extends Scene
             planet-a.vy += refl-y
             planet-b.vx -= refl-x
             planet-b.vy -= refl-y
+    */
+
+    @world
+      ..Step delta / 100, 4 4
+      ..ClearForces!
 
   render: (ctx) ->
     ctx.save!
