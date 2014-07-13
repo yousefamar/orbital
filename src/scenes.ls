@@ -1,7 +1,9 @@
 { EntityManager, Player, Planet } = require \./entities.ls
 {
   Common : Math : b2Vec2 : Vector
-  Dynamics : b2World : World
+  Dynamics :
+    b2World : World
+    b2ContactListener : ContactListener
 } = require "./Box2dWeb-2.1.a.3.js"
 
 class Scene
@@ -28,6 +30,7 @@ class Space extends Scene
       new Vector! # no gravity
       true        # objects may sleep
     @planets = []
+    @absorptions = []
 
     @camera =
       # NOTE: Hardcoded canvas dimensions here.
@@ -49,6 +52,26 @@ class Space extends Scene
         ctx.scale @zoom, @zoom
         #ctx.translate -@x, -@y
 
+    contact-listener = new ContactListener
+      ..BeginContact = ~>
+        a = it.Get-fixture-a!Get-body!Get-user-data!
+        b = it.Get-fixture-b!Get-body!Get-user-data!
+        console.log a, b
+
+        # Assuming both are Planets
+
+        if a.mass is b.mass
+          @absorptions.push switch
+            case a instanceof Player =>
+              agent : a, target : b
+            case b instanceof Player =>
+              agent : b, target : a
+            case otherwise =>
+              if Math.random! < 0.5 # Coin toss
+              then agent : a, target : b
+              else agent : b, target : a
+    @world.SetContactListener contact-listener
+
     @add @player = new Player @
 
     for til 50
@@ -57,6 +80,10 @@ class Space extends Scene
   add: (entity) ->
     super ...
     if entity instanceof Planet then @planets.push entity
+  remove: (entity) ->
+    @entity-manager.remove entity
+    if entity instanceof Planet
+      @world.DestroyBody entity.body
 
   key-down: (code) ->
     @player.keys
@@ -76,6 +103,13 @@ class Space extends Scene
     super ...
     @camera.move-towards @player
     @camera.zoom = 1 + 9 * (1 - ((@player.radius-smooth - 0.798) / 24.73))
+
+    @absorptions
+      ..for-each ~>
+        console.log it
+        it.agent.mass *= 2
+        @remove it.target
+      ..length = 0 # empty it
 
     /*
     # TODO: Reduce complexity

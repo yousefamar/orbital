@@ -1,5 +1,3 @@
-{ List } = require \./utils.ls
-
 # Destructure useful bits out of Box2dWeb into local scope
 {
   Dynamics :
@@ -12,22 +10,26 @@
 
 class EntityManager
   (@scene) ->
-    @tick-queue = new List!
-    @render-queue = new List!
+    @tick-queue   = []
+    @render-queue = []
 
   add: (entity) ->
-    if \tick of entity then @tick-queue.add entity
-    if \render of entity then @render-queue.add entity
+    if \tick   of entity then @tick-queue  .push entity
+    if \render of entity then @render-queue.push entity
+
+  remove: (entity) ->
+    if \tick of entity then @tick-queue.splice do
+      @tick-queue.index-of entity
+      1
+    if \render of entity then @render-queue.splice do
+      @render-queue.index-of entity
+      1
 
   tick: (delta) ->
-    for til @tick-queue.size
-      entity = @tick-queue.poll!
-      (entity.tick delta) && @tick-queue.add entity
+    @tick-queue.for-each (.tick delta)
 
   render: (ctx, debug=false) ->
-    for til @render-queue.size
-      entity = @render-queue.poll!
-      (entity.render ctx, debug) && @render-queue.add entity
+    @render-queue.for-each (.render ctx, debug)
 
 class Entity
   (@scene, @x, @y) ->
@@ -100,9 +102,11 @@ class Planet extends Entity
     @fy = 0
     */
 
-    body-def.position
-      ..x = x
-      ..y = y
+    body-def
+      ..position
+        ..x = x
+        ..y = y
+      ..user-data = this
     @body = scene.world.CreateBody body-def
     @radius-smooth = 0
     @mass = mass # setter automatically creates fixture with correct radius
@@ -167,7 +171,6 @@ class Planet extends Entity
       ctx.fill-style = \white
       ctx.fill-text "(#{x}, #{y})", x, y
       ctx.restore!
-    true
 
 
 class Player extends Planet
@@ -188,8 +191,10 @@ class Player extends Planet
     @keys.s = false
     @keys.d = false
 
+    /*
     @x = 0
     @y = 0
+    */
 
   tick: (delta) ->
     super ...
@@ -203,13 +208,12 @@ class Player extends Planet
 
     # FIXME Use constant force, but just change its direction. (At the moment,
     # the total force applied is doubled if moving diagonally.)
-    move-force = 0.1newton
+    move-force = 0.1newton * @mass
     x = y = 0
     @keys.w and y -= move-force
     @keys.s and y += move-force
     @keys.a and x -= move-force
     @keys.d and x += move-force
     @body.ApplyForce { x, y }, @position
-    true
 
 module.exports = { Player, Planet, EntityManager }
