@@ -160,7 +160,7 @@ class Planet extends Entity
     ctx.fill-text "#{@mass}", 0, @radius-smooth
     ctx.restore!
     if debug
-      ctx.sav
+      ctx.save!
       ctx.font = '8px Arial'
       ctx.fill-style = \white
       ctx.fill-text "(#{x}, #{y})", x, y
@@ -197,4 +197,33 @@ class Player extends Planet
     @keys.d and x += move-force
     @body.ApplyForce { x, y }, @position
 
-module.exports = { Player, Planet, EntityManager }
+class Star extends Entity
+  -> super ...
+
+  render: (ctx, debug=false) ->
+    cam = @scene.camera
+
+    # Hacky viewport culling to prevent murdering FPS
+    # NOTE: Hardcoded canvas dimensions here.
+    if @x - cam.x < 0px or
+       @x - cam.x > 800px or
+       @y - cam.y < 0px or
+       @y - cam.y > 450px
+       return
+
+    ctx.save!
+    ctx.set-transform 1, 0, 0, 1, 0, 0
+    ctx.translate -@scene.camera.x, -@scene.camera.y
+    ctx.translate @x, @y
+    ctx.rect 0, 0, 1, 1
+    ctx.fill-style = \white
+    ctx.fill!
+    if debug
+      ctx.save!
+      ctx.font = '8px Arial'
+      ctx.fill-style = \white
+      ctx.fill-text "(#{@x - cam.x}, #{@y - cam.y})", 0, 0
+      ctx.restore!
+    ctx.restore!
+
+module.exports = { Player, Planet, Star, EntityManager }

@@ -1,4 +1,4 @@
-{ EntityManager, Player, Planet } = require \./entities.ls
+{ EntityManager, Player, Planet, Star } = require \./entities.ls
 {
   Common : Math : b2Vec2 : Vector
   Dynamics :
@@ -74,6 +74,15 @@ class Space extends Scene
     @world.SetContactListener contact-listener
 
     @add @player = new Player @
+
+
+    # Spawn stars
+    for til 100
+      @add new Star do
+        @
+        (Math.random! - 0.5) * 1000
+        (Math.random! - 0.5) * 1000
+
 
     for til 50
 
