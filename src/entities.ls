@@ -198,12 +198,17 @@ class Player extends Planet
     @body.ApplyForce { x, y }, @position
 
 class Star extends Entity
-  -> super ...
+  ->
+    super ...
+    # Distance visualised as color rather than size to be less distracting
+    rand = (Math.random! * 255).>>>.0
+    @color = "rgb(#rand,#rand,#rand)"
 
   render: (ctx, debug=false) ->
     cam = @scene.camera
 
     # Hacky viewport culling to prevent murdering FPS
+    #   (Should really be done for all entities in a structured way)
     # NOTE: Hardcoded canvas dimensions here.
     if @x - cam.x < 0px or
        @x - cam.x > 800px or
@@ -215,14 +220,16 @@ class Star extends Entity
     ctx.set-transform 1, 0, 0, 1, 0, 0
     ctx.translate -@scene.camera.x, -@scene.camera.y
     ctx.translate @x, @y
+    ctx.begin-path!
+    ctx.fill-style = @color
     ctx.rect 0, 0, 1, 1
-    ctx.fill-style = \white
     ctx.fill!
     if debug
       ctx.save!
       ctx.font = '8px Arial'
       ctx.fill-style = \white
-      ctx.fill-text "(#{@x - cam.x}, #{@y - cam.y})", 0, 0
+      ctx.fill-text @color, 0, 0
+      #ctx.fill-text "(#{@x - cam.x}, #{@y - cam.y})", 0, 0
       ctx.restore!
     ctx.restore!
 
