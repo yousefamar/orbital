@@ -37,20 +37,20 @@ class Space extends Scene
     @camera =
       # NOTE: Hardcoded canvas dimensions here.
       zoom: 1
-      x: -400px
-      y: -225px
+      x: 0
+      y: 0
       move-towards: (entity, speed=0.1) ->
         speed /= 1 + @zoom/10
         # NOTE: Hardcoded canvas dimensions here.
         { x : entity-x, y : entity-y } = entity.position
-        @x += speed * (@zoom*entity-x - @x - 400px)
-        @y += speed * (@zoom*entity-y - @y - 225px)
+        @x += speed * (@zoom*entity-x - @x)
+        @y += speed * (@zoom*entity-y - @y)
         #if @x < 0 then @x = 0
         #if @x > @limitX then @x = @limitX
         #if @y < 0 then @y = 0
         #if @y > @limitY then @y = @limitY
       apply-transform: (ctx) ->
-        ctx.translate -@x, -@y
+        ctx.translate -@x + ctx.canvas.width/2, -@y + ctx.canvas.height/2
         ctx.scale @zoom, @zoom
         #ctx.translate -@x, -@y
 
