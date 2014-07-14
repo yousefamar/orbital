@@ -75,26 +75,32 @@ class Space extends Scene
 
     @add @player = new Player @
 
+    # Initial planets
     for til 50
+      @spawn-small-planet!
 
-      # Place a new planet somewhere within a circle
-      radius = 50 * Math.random!
-      angle  = Math.random! * Math.PI * 2
+  spawn-small-planet: (spawn-center={x:0,y:0},
+                       spawn-radius-min=0, spawn-radius-max=50) ~>
 
-      p = new Planet do
-        @
-        radius * Math.cos angle
-        radius * Math.sin angle
-        if Math.random! > 0.66 then 2 else 4
+    # Place a new planet somewhere within a circle
+    radius = spawn-radius-min +
+      (spawn-radius-max - spawn-radius-min) * Math.random!
+    angle  = Math.random! * Math.PI * 2
 
-      # Apply an initial force to get some orbits going
-      magnitude = 0.006 # TODO Actually calculate what you need for an orbit?
-      direction = angle + Math.PI / 2 # tangent to centre of "solar system"
-      p.body.ApplyForce do
-        * x : magnitude * Math.cos direction
-          y : magnitude * Math.sin direction
-        * p.body.Get-position!
-      @add p
+    p = new Planet do
+      @
+      spawn-center.x + radius * Math.cos angle
+      spawn-center.y + radius * Math.sin angle
+      if Math.random! > 0.66 then 2 else 4
+
+    # Apply an initial force to get some orbits going
+    magnitude = 0.006 # TODO Actually calculate what you need for an orbit?
+    direction = angle + Math.PI / 2 # tangent to centre of "solar system"
+    p.body.ApplyForce do
+      * x : magnitude * Math.cos direction
+        y : magnitude * Math.sin direction
+      * p.body.Get-position!
+    @add p
 
   add: (entity) ->
     super ...
@@ -130,6 +136,7 @@ class Space extends Scene
       ..for-each ~>
         it.agent.mass *= 2
         @remove it.target
+        @spawn-small-planet @player.position, @player.radius * 2, @player.radius * 2 + 50
       ..length = 0 # empty it
 
     # Apply Newton's general gravitation between each pair of planets.
