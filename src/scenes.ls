@@ -1,4 +1,10 @@
 { EntityManager, Player, Planet } = require \./entities.ls
+{
+  Common : Math : b2Vec2 : Vector
+  Dynamics :
+    b2World : World
+    b2ContactListener : ContactListener
+} = require "./Box2dWeb-2.1.a.3.js"
 
 class Scene
   ->
@@ -20,19 +26,25 @@ class Space extends Scene
   ->
     super!
 
+    @world = new World do
+      new Vector! # No global gravity.
+      no          # Objects may not sleep: Sleep easily triggers
+                    # and causes unpredictable behaviour when gravitational
+                    # force on a planet is small but still significant.
     @planets = []
+    @absorptions = []
 
     @camera =
       # NOTE: Hardcoded canvas dimensions here.
       zoom: 1
       x: -400px
       y: -225px
-      move-towards: (entity, speed) ->
-        speed = speed || 0.1
+      move-towards: (entity, speed=0.1) ->
         speed /= 1 + @zoom/10
         # NOTE: Hardcoded canvas dimensions here.
-        @x += speed * (@zoom*entity.x- @x - 400px)
-        @y += speed * (@zoom*entity.y- @y - 225px)
+        { x : entity-x, y : entity-y } = entity.position
+        @x += speed * (@zoom*entity-x - @x - 400px)
+        @y += speed * (@zoom*entity-y - @y - 225px)
         #if @x < 0 then @x = 0
         #if @x > @limitX then @x = @limitX
         #if @y < 0 then @y = 0
@@ -42,103 +54,110 @@ class Space extends Scene
         ctx.scale @zoom, @zoom
         #ctx.translate -@x, -@y
 
+    contact-listener = new ContactListener
+      ..BeginContact = ~>
+        a = it.Get-fixture-a!Get-body!Get-user-data!
+        b = it.Get-fixture-b!Get-body!Get-user-data!
+
+        # Assuming both are Planets
+
+        if a.mass is b.mass
+          @absorptions.push switch
+            case a instanceof Player =>
+              agent : a, target : b
+            case b instanceof Player =>
+              agent : b, target : a
+            case otherwise =>
+              if Math.random! < 0.5 # Coin toss
+              then agent : a, target : b
+              else agent : b, target : a
+    @world.SetContactListener contact-listener
+
     @add @player = new Player @
 
     for til 50
-      @add new Planet @, (Math.random! - 0.5) * 100, (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
+
+      # Place a new planet somewhere within a circle
+      radius = 50 * Math.random!
+      angle  = Math.random! * Math.PI * 2
+
+      p = new Planet do
+        @
+        radius * Math.cos angle
+        radius * Math.sin angle
+        if Math.random! > 0.66 then 2 else 4
+
+      # Apply an initial force to get some orbits going
+      magnitude = 0.006 # TODO Actually calculate what you need for an orbit?
+      direction = angle + Math.PI / 2 # tangent to centre of "solar system"
+      p.body.ApplyForce do
+        * x : magnitude * Math.cos direction
+          y : magnitude * Math.sin direction
+        * p.body.Get-position!
+      @add p
 
   add: (entity) ->
     super ...
     if entity instanceof Planet then @planets.push entity
+  remove: (entity) ->
+    @entity-manager.remove entity
+    if entity instanceof Planet
+      @world.DestroyBody entity.body
+      @planets.splice do
+        @planets.index-of entity
+        1
 
   key-down: (code) ->
-    if code is 65 or code is 37
-      @player.keys.a = true
-    else if code is 68 or code is 39
-      @player.keys.d = true
-    else if code is 87 or code is 38
-      @player.keys.w = true
-    else if code is 83 or code is 40
-      @player.keys.s = true
+    @player.keys
+      ..a = true if code in [ 65 37 ]
+      ..d = true if code in [ 68 39 ]
+      ..w = true if code in [ 87 38 ]
+      ..s = true if code in [ 83 40 ]
 
   key-up: (code) ->
-    if code is 65 or code is 37
-      @player.keys.a = false
-    else if code is 68 or code is 39
-      @player.keys.d = false
-    else if code is 87 or code is 38
-      @player.keys.w = false
-    else if code is 83 or code is 40
-      @player.keys.s = false
+    @player.keys
+      ..a = false if code in [ 65 37 ]
+      ..d = false if code in [ 68 39 ]
+      ..w = false if code in [ 87 38 ]
+      ..s = false if code in [ 83 40 ]
 
   tick: (delta) ->
     super ...
-    @camera.moveTowards @player
+    @camera.move-towards @player
     @camera.zoom = 1 + 9 * (1 - ((@player.radius-smooth - 0.798) / 24.73))
 
-    # TODO: Reduce complexity
-    for i til @planets.length
-      planet-a = @planets[i]
-      for j from i+1 til @planets.length
-        planet-b = @planets[j]
-        #if planet-a is planet-b then continue
-        dist-x = planet-b.x - planet-a.x
-        dist-y = planet-b.y - planet-a.y
-        dist-sq = (dist-x * dist-x + dist-y * dist-y)
-        dist = Math.sqrt dist-sq
-        unit-x = dist-x / dist
-        unit-y = dist-y / dist
-        mm = planet-a.mass * planet-b.mass
-        force = if dist-x is 0 then 0 else 0.001 * mm / dist-sq
-        planet-a.fx += force * unit-x
-        planet-a.fy += force * unit-y
-        planet-b.fx -= force * unit-x
-        planet-b.fy -= force * unit-y
+    @absorptions
+      ..for-each ~>
+        it.agent.mass *= 2
+        @remove it.target
+      ..length = 0 # empty it
 
-    for planet in @planets
-      planet.prev-x = planet.x
-      planet.prev-y = planet.y
-      planet.vx += planet.fx
-      planet.vy += planet.fy
-      planet.x += planet.vx
-      planet.y += planet.vy
-      planet.fx = 0
-      planet.fy = 0
+    # Apply Newton's general gravitation between each pair of planets.
+    #
+    # This is a naive `O(n^2)` n-body simulation.
+    # TODO Use the Barnes-Hut method (point quadtree) for `O(n log n)` .
+    @planets.for-each (a) ~>
+      @planets.for-each (b) ~>
+        return if a is b
 
-    for i til @planets.length
-      planet-a = @planets[i]
-      for j from i+1 til @planets.length
-        planet-b = @planets[j]
-        if planet-a.collides-with planet-b
-          if planet-a.mass == planet-b.mass
-            absorber = planet-a
-            absorbee = planet-b
-            absorbee-id = j
-            if absorbee is @player
-              absorber = planet-b
-              absorbee = planet-a
-              absorbee-id = i
-            absorbee.absorbed = true
-            @planets.splice absorbee-id, 1
-            # TODO: Don't hack LiveScript
-            to$--
-            to1$--
-            absorber.mass *= 2
-            for til 2
-              @add new Planet @, @player.x + (Math.random! - 0.5) * 100, @player.y + (Math.random! - 0.5) * 100, if Math.random! > 0.66 then 2 else 4
-          else
-            inci-x = planet-a.x - planet-a.prev-x
-            inci-y = planet-a.y - planet-a.prev-y
-            dist-x = planet-b.x - planet-a.x
-            dist-y = planet-b.y - planet-a.y
-            dot = inci-x * dist-x + inci-y * dist-y
-            dist-sq = dist-x * dist-x + dist-y * dist-y
-            refl-x = inci-x - (2 * dot) * dist-x / dist-sq
-            refl-y = inci-y - (2 * dot) * dist-y / dist-sq
-            planet-a.vx += refl-x
-            planet-a.vy += refl-y
-            planet-b.vx -= refl-x
-            planet-b.vy -= refl-y
+        # Beef up force of gravity so it has a noticeable effect on bodies the
+        # mass of which Box2D can comprehend.
+
+        G = 6.67e-11
+        artistic-license = 10_000_000Shakespeares
+        dx = a.position.x - b.position.x
+        dy = a.position.y - b.position.y
+        r-squared = dx^2 + dy^2
+        magnitude = -G * a.mass * b.mass / r-squared * artistic-license
+        angle = Math.atan2 dy, dx
+        a.body.Apply-force do
+          * x : magnitude * Math.cos angle
+            y : magnitude * Math.sin angle
+          * a.body.Get-position!
+
+    @world
+      ..Step delta, 10 10
+      ..ClearForces!
 
   render: (ctx) ->
     ctx.save!
