@@ -19,7 +19,7 @@ tick = do
 
 render = (ctx, renderables, debug=false) !->
   ctx
-    ..fill-style = \black
+    ..fill-style = \#ccc0b3
     ..fill-rect 0, 0, ctx.canvas.width, ctx.canvas.height
 
   renderables.for-each -> it.render ctx, debug
