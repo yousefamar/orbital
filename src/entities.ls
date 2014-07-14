@@ -203,6 +203,8 @@ class Star extends Entity
     # Distance visualised as color rather than size to be less distracting
     rand = (Math.random! * 255).>>>.0
     @color = "rgb(#rand,#rand,#rand)"
+    # Parallax distance
+    @depth = (1 + Math.random! * 3).>>>.0
 
   render: (ctx, debug=false) ->
     cam = @scene.camera
@@ -210,15 +212,15 @@ class Star extends Entity
     # Hacky viewport culling to prevent murdering FPS
     #   (Should really be done for all entities in a structured way)
     # NOTE: Hardcoded canvas dimensions here.
-    if @x - cam.x < 0px or
-       @x - cam.x > 800px or
-       @y - cam.y < 0px or
-       @y - cam.y > 450px
+    if @x - cam.x/@depth < 0px or
+       @x - cam.x/@depth > 800px or
+       @y - cam.y/@depth < 0px or
+       @y - cam.y/@depth > 450px
        return
 
     ctx.save!
     ctx.set-transform 1, 0, 0, 1, 0, 0
-    ctx.translate -@scene.camera.x, -@scene.camera.y
+    ctx.translate -@scene.camera.x/@depth, -@scene.camera.y/@depth
     ctx.translate @x, @y
     ctx.begin-path!
     ctx.fill-style = @color

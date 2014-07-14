@@ -77,11 +77,11 @@ class Space extends Scene
 
 
     # Spawn stars
-    for til 100
+    for til 10000
       @add new Star do
         @
-        (Math.random! - 0.5) * 1000
-        (Math.random! - 0.5) * 1000
+        (Math.random! - 0.5) * 5000
+        (Math.random! - 0.5) * 5000
 
 
     for til 50
